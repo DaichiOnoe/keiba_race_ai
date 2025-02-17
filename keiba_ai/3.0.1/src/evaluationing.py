@@ -12,12 +12,13 @@ class Evaluator:
     def __init__(
         self,
         return_tables_filepath: Path = PREPROCESSED_DIR/ "return_tables.pickle",
-        evaluation_filepath: Path = TRAIN_DIR / "evaluation.csv",
+        train_dir: Path = TRAIN_DIR,
+        evaluation_filename: str ="evaluation.csv",
         output_dir :Path = OUTPUT_DIR
      ):
 
         self.return_tables =  pd.read_pickle(return_tables_filepath)
-        self.evaluation_df = pd.read_csv(evaluation_filepath,sep="\t")
+        self.evaluation_df = pd.read_csv(train_dir / evaluation_filename,sep="\t")
         self.output_dir = output_dir
         
         
@@ -79,7 +80,9 @@ class Evaluator:
             .to_frame()
             .reset_index()
         )
-        return pd.merge(agg_hitrate, agg_returnrate, on="bet_type")
+        output_df =pd.merge(agg_hitrate, agg_returnrate, on="bet_type")
+        output_df.insert(0, "topn", n)
+        return output_df
     
     
     def summarize_box_top_n(
@@ -94,15 +97,14 @@ class Evaluator:
         topnの的中率・回収率を人気順モデルと比較してまとめる関数。
         """
         summary_df = pd.concat(
-           [
+    
                 self.box_top_n("popularity", True, n, "pop"),  # 人気順モデル
                 self.box_top_n(sort_col, ascending, n, exp_name),  # 実験モデル
-                # on=["topn", "bet_type"],
-            ],
-            axis=1,
-        ).sort_index(axis=1)
+                on=["topn", "bet_type"],
+        )
         summary_df.to_csv(self.output_dir / save_filename, sep="\t")
         return summary_df
+
     
     def summarize_box_exp(
         self, sort_col: str = "pred", exp_name: str = "model"
