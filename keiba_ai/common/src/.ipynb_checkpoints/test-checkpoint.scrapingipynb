@@ -1,0 +1,124 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "6fcae92c-9990-469a-b33d-e7b802a74e21",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import scraping\n",
+    "import pickle"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8a6b0179-500e-4723-a519-04a06c70ec61",
+   "metadata": {},
+   "source": [
+    "#　開催日を取得"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "437b4cf9-3e8d-4daa-9868-b79fe2df7348",
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "d466a806dc814cecb284f7806e64a6bd",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "  0%|          | 0/12 [00:00<?, ?it/s]"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "kaisai_date_list = scraping.scrape_kaisai_date(from_=\"2024-1\", to_=\"2024-12\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "0fdc8362-0ba5-4f65-a6cf-1ef211077647",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "d6917e9ac2e2491885087719d9043cea",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "  0%|          | 0/106 [00:00<?, ?it/s]"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "race_id_list = scraping.scrape_race_id_list(kaisai_date_list)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "b55eeeeb-cf54-4381-87aa-6b013a150a69",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# レースidを保存\n",
+    "with open(\"race_id_list.pickle\", \"wb\") as f:\n",
+    "    pickle.dump(race_id_list, f)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2706ada9-5bde-4ebe-acb9-c3dbd048c8a2",
+   "metadata": {},
+   "source": [
+    "# レースページを取得"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "7d25c0cc-3064-4d15-8590-55f83b6f27d5",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
