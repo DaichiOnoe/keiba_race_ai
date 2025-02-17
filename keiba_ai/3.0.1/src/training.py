@@ -15,11 +15,12 @@ OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 class Trainer:
     def __init__(
         self,
-        features_filepath: Path = INPUT_DIR / "features.csv",
+        input_dir: Path = INPUT_DIR,
+        features_filename: str = "features.csv",
         config_filepath: Path = "config.yaml",
         output_dir: Path = OUTPUT_DIR,
     ):
-        self.features = pd.read_csv(features_filepath, sep="\t")
+        self.features = pd.read_csv(input_dir / features_filename, sep="\t")
         with open(config_filepath, "r") as f:
             self.feature_cols = yaml.safe_load(f)["features"]
         self.output_dir = output_dir

@@ -39,17 +39,19 @@ with open(MAPPING_DIR / "race_class.json", "r") as f:
 class FeatureCreator:
     def __init__(
         self,
-        poplation_filepath: Path = POPULATION_DIR / "population.csv",
-        results_filepath: Path = INPUT_DIR / "results.csv",
-        race_info_filepath: Path = INPUT_DIR / "race_info.csv",
-        horse_results_filepath: Path = INPUT_DIR / "horse_results.csv",
+        poplation_dir: Path = POPULATION_DIR,
+        poplation_filename: str = "population.csv",
+        input_dir = INPUT_DIR,
+        results_filename: str="results.csv",
+        race_info_filename: str="race_info.csv",
+        horse_results_filename: str="horse_results.csv",
         output_dir: Path = OUTPUT_DIR,
         output_filename: str = "features.csv",
     ):
-        self.population = pd.read_csv(poplation_filepath, sep="\t")
-        self.results = pd.read_csv(results_filepath, sep="\t")
-        self.race_info = pd.read_csv(race_info_filepath, sep="\t")
-        self.horse_results = pd.read_csv(horse_results_filepath, sep="\t")
+        self.population = pd.read_csv(poplation_dir / poplation_filename, sep="\t")
+        self.results = pd.read_csv(input_dir / results_filename, sep="\t")
+        self.race_info = pd.read_csv(input_dir / race_info_filename, sep="\t")
+        self.horse_results = pd.read_csv(input_dir / horse_results_filename, sep="\t")
         self.output_dir = output_dir
         self.output_filename = output_filename
 

@@ -31,7 +31,7 @@ def process_results(
     population_filename: str = "population.csv",
     input_dir: Path = RAWDF_DIR,
     output_dir: Path = OUTPUT_DIR,
-    save_filename: str = "results.csv",
+    output_filename: str = "results.csv",
     sex_mapping: dict = sex_mapping,
 ) ->pd.DataFrame:
     
@@ -85,7 +85,7 @@ def process_results(
         ]
     ]
     
-    df.to_csv(output_dir / save_filename, sep = "\t" , index =False)
+    df.to_csv(output_dir / output_filename, sep = "\t" , index =False)
     return df
 
 

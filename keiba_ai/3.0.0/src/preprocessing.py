@@ -31,7 +31,8 @@ def process_results(
     population_filename: str = "population.csv",
     input_dir: Path = RAWDF_DIR,
     output_dir: Path = OUTPUT_DIR,
-    save_filename: str = "results.csv",
+    input_filename: str = "results.csv",
+    output_filename: str = "results.csv",
     sex_mapping: dict = sex_mapping,
 ) ->pd.DataFrame:
     
@@ -42,7 +43,7 @@ def process_results(
 
     population = pd.read_csv(population_dir / population_filename, sep="\t")
     df = (
-        pd.read_csv(input_dir / "results.csv", sep="\t")
+        pd.read_csv(input_dir / input_filename, sep="\t")
     # .query("race_id in @population['race_id']")
     )
     df = df[df['race_id'].isin(population['race_id'])]
@@ -85,7 +86,7 @@ def process_results(
         ]
     ]
     
-    df.to_csv(output_dir / save_filename, sep = "\t" , index =False)
+    df.to_csv(output_dir / output_filename, sep = "\t" , index =False)
     return df
 
 
@@ -94,7 +95,8 @@ def process_horse_results(
     POPULATION_FILENAME: str = "population.csv",
     input_dir: Path = RAWDF_DIR,
     output_dir: Path = OUTPUT_DIR,
-    save_filename: str = "horse_results.csv",
+    input_filename: str = "horse_results.csv",
+    output_filename: str = "horse_results.csv",
     race_type_mapping: dict = race_type_mapping,
     weather_mapping: dict = weather_mapping,
     ground_condition_mapping: dict = ground_condition_mapping,
@@ -108,7 +110,7 @@ def process_horse_results(
 
     population = pd.read_csv(POPULATION_DIR / POPULATION_FILENAME, sep="\t")
     df = (
-        pd.read_csv(input_dir/"horse_results.csv", sep="\t")
+        pd.read_csv(input_dir/input_filename, sep="\t")
         # .query( "horse_id in @population['horse_id']" )
     )
     df = df[df['horse_id'].isin(population['horse_id'])]
@@ -144,7 +146,7 @@ def process_horse_results(
         ]
     ]
     
-    df.to_csv(output_dir / save_filename, sep="\t", index=False)
+    df.to_csv(output_dir / output_filename, sep="\t", index=False)
     return df
 
 
