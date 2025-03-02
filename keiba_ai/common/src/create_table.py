@@ -58,12 +58,12 @@ def table_results(
                 df["trainer_id"] = trainer_id_list
 
                 # owner_id列追加
-                owner_id_list = []
-                a_list = soup.find_all("a", href=re.compile(r"/owner/"))
-                for a in a_list:
-                    owner_id = re.findall(r"\d{6}",a["href"])[0]
-                    owner_id_list.append(owner_id)
-                df["owner_id"] = trainer_id_list
+                # owner_id_list = []
+                # a_list = soup.find_all("a", href=re.compile(r"/owner/"))
+                # for a in a_list:
+                #     owner_id = re.findall(r"\d{6}",a["href"])[0]
+                #     owner_id_list.append(owner_id)
+                # df["owner_id"] = owner_id_list
                 
                 # 最初の列にrace_idを挿入。なぜか列名のコラムとして追加されていなかったので、追加
                 df.insert(0, "race_id", race_id)
@@ -141,8 +141,6 @@ def table_horse_results(
                 horse_id = html_path.stem  # stemで拡張子なしのファイル名を取得
                 html = f.read()
                 df = pd.read_html(html)[2]
-                df.index = [horse_id]*len(df)
-                dfs[horse_id] = df
                 # 最初の列にrace_idを挿入
                 df.insert(0, "horse_id", horse_id)
                 dfs[horse_id] = df
@@ -155,7 +153,8 @@ def table_horse_results(
     concat_df = pd.concat(dfs.values())
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
-    updating_rawdf(concat_df, key="horse_id", save_filename=save_filename)
+    # updating_rawdf(concat_df, key="horse_id", save_filename=save_filename)
+    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
 
 
@@ -191,6 +190,232 @@ def create_return_tables(
         save_filename=save_filename,
         save_dir=save_dir,
     )
+    return concat_df
+
+def create_jockey_leading(
+        html_path_list: list[Path],
+        save_dir: Path = RAWDF_DIR,
+        save_filename: str = "jockey_leading.csv"
+) -> pd.DataFrame:
+    """
+    保存済みの騎手ページのhtmlを読み込んで騎手のリーディングテーブルを加工する関数。リスト型をつなげる。
+    """
+    dfs = {}
+    for html_path in tqdm(html_path_list):
+        with open(html_path, "rb") as f:
+            try:
+                # ファイル名からrace_idを取得
+                page_id = html_path.stem
+                html = f.read()
+                soup = BeautifulSoup(html, "lxml").find("table", class_="nk_tb_common")
+                df = pd.read_html(html)[0]
+                df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+                # jockey_id列追加
+                a_list = soup.find_all("a", href=re.compile(r"/jockey/"))
+                jobkey_id_list = []
+                for a in a_list:
+                    jobkey_id = re.findall(r"\d+",a["href"])[0]
+                    jobkey_id_list.append(jobkey_id)
+                # 最初の列にjockey_idを挿入
+                df.insert(0, "jockey_id", jobkey_id_list)
+                dfs[jobkey_id] = df
+                # 最初の列にpage_idを挿入
+                df.insert(0, "page_id", page_id)
+            except IndexError as e:
+                print(f"table not found at {page_id}")
+                continue
+            except AttributeError as e:
+                print(f"{e} at {page_id}")
+                continue
+    concat_df = pd.concat(dfs.values())
+    # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+    concat_df.columns = concat_df.columns.str.replace(" ","")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    return concat_df
+    
+def create_trainer_leading(
+        html_path_list: list[Path],
+        save_dir: Path = RAWDF_DIR,
+        save_filename: str = "trainer_leading.csv"
+) -> pd.DataFrame:
+    """
+    保存済みの調教師ページのhtmlを読み込んで騎手のリーディングテーブルを加工する関数。リスト型をつなげる。
+    """
+    dfs = {}
+    for html_path in tqdm(html_path_list):
+        with open(html_path, "rb") as f:
+            try:
+                # ファイル名からrace_idを取得
+                page_id = html_path.stem
+                html = f.read()
+                soup = BeautifulSoup(html, "lxml").find("table", class_="nk_tb_common")
+                df = pd.read_html(html)[0]
+                df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+                # trainer_id列追加
+                a_list = soup.find_all("a", href=re.compile(r"/trainer/"))
+                trainer_id_list = []
+                for a in a_list:
+                    trainer_id = re.findall(r"\d+", a["href"])[0]
+                    trainer_id_list.append(trainer_id)
+                # 最初の列にtrainer_idを挿入
+                df.insert(0, "trainer_id", trainer_id_list)
+                dfs[trainer_id] = df
+                # 最初の列にpage_idを挿入
+                df.insert(0, "page_id", page_id)
+                # dfs[page_id] = df
+            except IndexError as e:
+                print(f"table not found at {page_id}")
+                continue
+            except AttributeError as e:
+                print(f"{e} at {page_id}")
+                continue
+    concat_df = pd.concat(dfs.values())
+    # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+    concat_df.columns = concat_df.columns.str.replace(" ","")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    return concat_df
+
+def create_sire_leading(
+        html_path_list: list[Path],
+        save_dir: Path = RAWDF_DIR,
+        save_filename: str = "sire_leading.csv"
+) -> pd.DataFrame:
+    """
+    保存済みの種牡馬ページのhtmlを読み込んで種牡馬のリーディングテーブルを加工する関数。リスト型をつなげる。
+    """
+    dfs = {}
+    for html_path in tqdm(html_path_list):
+        with open(html_path, "rb") as f:
+            try:
+                # ファイル名からrace_idを取得
+                page_id = html_path.stem
+                html = f.read()
+                soup = BeautifulSoup(html, "lxml").find("table", class_="nk_tb_common")
+                df = pd.read_html(html)[0]
+                df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+                # sire_id列追加
+                a_list = soup.find_all("a", href=re.compile(r"/sire/"))
+                pattern = r'/horse/sire/([0-9a-zA-Z]+)/'
+                sire_id_list = []
+                # for a in a_list:
+                #     sire_id = re.findall(r"\d+", a["href"])[0]
+                #     sire_id_list.append(sire_id)
+                 # 記号交じりのsire_idを取得するために以下のように修正以下のように修正
+                for a in a_list:
+                    href = a["href"]  # href 属性を取得
+                    match = re.search(pattern, href)  # 正規表現で検索   
+                    sire_id = match.group(1)  # 種牡馬識別記号を取得
+                    sire_id_list.append(sire_id)  # リストに追加
+                # 最初の列にsire_idを挿入
+                df.insert(0, "sire_id", sire_id_list)
+                dfs[sire_id] = df
+                # 最初の列にpage_idを挿入
+                df.insert(0, "page_id", page_id)
+            except IndexError as e:
+                print(f"table not found at {page_id}")
+                continue
+            except AttributeError as e:
+                print(f"{e} at {page_id}")
+                continue
+    concat_df = pd.concat(dfs.values())
+     # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+    concat_df.columns = concat_df.columns.str.replace(" ","")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    return concat_df
+
+def create_bms_leading(
+        html_path_list: list[Path],
+        save_dir: Path = RAWDF_DIR,
+        save_filename: str = "bms_leading.csv"
+) -> pd.DataFrame:
+    """
+    保存済みの母父ページのhtmlを読み込んで母父のリーディングテーブルを加工する関数。リスト型をつなげる。
+    """
+    dfs = {}
+    for html_path in tqdm(html_path_list):
+        with open(html_path, "rb") as f:
+            try:
+                # ファイル名からrace_idを取得
+                page_id = html_path.stem
+                html = f.read()
+                soup = BeautifulSoup(html, "lxml").find("table", class_="nk_tb_common")
+                df = pd.read_html(html)[0]
+                df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+                # bms_id列追加
+                a_list = soup.find_all("a", href=re.compile(r"/sire/"))
+                pattern = r'/horse/sire/([0-9a-zA-Z]+)/'
+                bms_id_list = []
+                # for a in a_list:
+                #     bms_id = re.findall(r"\d+", a["href"])[0]
+                #     bms_id_list.append(bms_id)
+                for a in a_list:
+                    href = a["href"]  # href 属性を取得
+                    match = re.search(pattern, href)  # 正規表現で検索   
+                    bms_id = match.group(1)  # 種牡馬識別記号を取得
+                    bms_id_list.append(bms_id)  # リストに追加
+                # 最初の列にbms_idを挿入
+                df.insert(0, "bms_id", bms_id_list)
+                dfs[bms_id] = df
+                # 最初の列にpage_idを挿入
+                df.insert(0, "page_id", page_id)
+            except IndexError as e:
+                print(f"table not found at {page_id}")
+                continue
+            except AttributeError as e:
+                print(f"{e} at {page_id}")
+                continue
+    concat_df = pd.concat(dfs.values())
+    # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
+    concat_df.columns = concat_df.columns.str.replace(" ","")
+    save_dir.mkdir(parents=True, exist_ok=True)
+    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    return concat_df
+                
+                
+
+def create_peds(
+        html_path_list: list[Path],
+        save_dir: Path = RAWDF_DIR,
+        save_filename: str = "peds.csv"
+) -> pd.DataFrame:
+    """
+    保存済みの馬の血統ページのhtmlを読み込んで血統テーブルを加工する関数。リスト型をつなげる。
+    """
+    dfs = {}
+    for html_path in tqdm(html_path_list):
+        with open(html_path, "rb") as f:
+            try:
+                # ファイル名からhorse_idを取得
+                horse_id = html_path.stem
+                html = f.read()
+                soup = BeautifulSoup(html, "lxml").find("table", class_="blood_table detail")
+                td_list = soup.find_all("td")
+                ped_id_list = []
+                for td in td_list:
+                    ped_id = re.findall(r"horse/(\w+)/", td.find("a")["href"])[0]
+                    ped_id_list.append(ped_id)
+                df = pd.DataFrame(ped_id_list).T.add_prefix("ped_")
+                # 最初の列にhorse_idを挿入
+                df.insert(0, "horse_id", horse_id)
+                dfs[horse_id] = df
+            except IndexError as e:
+                print(f"table not found at {horse_id}")
+                continue
+            except AttributeError as e:
+                print(f"{e} at {horse_id}")
+                continue
+    concat_df = pd.concat(dfs.values())
+    save_dir.mkdir(parents=True, exist_ok=True)
+    updating_rawdf(
+        concat_df,
+        key="horse_id",
+        save_filename=save_filename,
+        save_dir=save_dir,
+    )
+    # concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
 
 

@@ -11,44 +11,45 @@ import scraping
 
 
 POPULATION_DIR = Path("..", "data", "prediction_population")
+POPULATION_DIR.mkdir(exist_ok=True, parents=True)
 
-def scrape_horse_id_list(race_id: str) ->list[str]:
-    
+def scrape_horse_id_list(race_id: str) -> list[str]:
     """
-    レースidを入れると、馬idがリストで返ってくる関数.
+    レースidを指定すると、出走馬id一覧が返ってくる関数。
     """
-    url = f"https://race.netkeiba.com/race/result.html?race_id={race_id}"
+    url = f"https://race.netkeiba.com/race/shutuba.html?race_id={race_id}"
     headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
             }
     req = Request(url, headers=headers)
     html = urlopen(req).read()
     soup = BeautifulSoup(html, "lxml")
-    span_list = soup.find_all("td", class_="HorseInfo")
+    td_list = soup.find_all("td", class_="HorseInfo")
     horse_id_list = []
-    for span in span_list:
-        horse_id = re.findall(r"\d{10}", span.find("a")["href"])[0]
+    for td in td_list:
+        horse_id = re.findall(r"\d{10}", td.find("a")["href"])[0]
         horse_id_list.append(horse_id)
-    return horse_id_list  
-
+    return horse_id_list
 
 
 def create(
     kaisai_date: str,
     save_dir: Path = POPULATION_DIR,
-    save_filename: str = "predict_population.csv"
+    save_filename: str = "population.csv",
 ) -> pd.DataFrame:
     """
-    開催日(yyyymmdd)を入れると、予測母集団である(date, race_id, horse_id)のデータフレームを返す関数.
+    開催日（yyyymmdd形式）を指定すると、予測母集団である
+    (date, race_id, horse_id)のDataFrameが返ってくる関数。
     """
+    print("scraping race_id_list...")
     race_id_list = scraping.scrape_race_id_list([kaisai_date])
-    
-    dfs =  {}
+    dfs = {}
+    print("scraping horse_id_list...")
     for race_id in tqdm(race_id_list):
         horse_id_list = scrape_horse_id_list(race_id)
         time.sleep(1)
         df = pd.DataFrame(
-            {"date":kaisai_date, "race_id":race_id, "horse_id":horse_id_list}
+            {"date": kaisai_date, "race_id": race_id, "horse_id": horse_id_list}
         )
         dfs[race_id] = df
     concat_df = pd.concat(dfs.values())
