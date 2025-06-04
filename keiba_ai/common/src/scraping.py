@@ -63,10 +63,8 @@ def scrape_kaisai_date(from_, to_):
         for a in a_list:
             kaisai_date = re.findall(r"kaisai_date=(\d{8})", a["href"])[0]
             kaisai_date_list.append(kaisai_date)
-            
+
     return kaisai_date_list
-
-
 
 
 def scrape_race_id_list(kaisai_date_list: list[str], save_dir = None) ->list[str]:
@@ -77,9 +75,11 @@ def scrape_race_id_list(kaisai_date_list: list[str], save_dir = None) ->list[str
     options = Options()
     options.add_argument("--headless") #バックグラウンドで実行
     #最新のChromeDriverを自動的にダウンロードして使用できるが故障しているので廃止中
-    # driver_path = ChromeDriverManager().install() 
+    # driver_path = ChromeDriverManager().install()     
     # 無理やりpathを指定
-    driver_path = 'C:/Users/Onoe Daichi/Downloads/競馬AI/keiba_ai/common/src/chromedriver-win32/chromedriver.exe'
+    # driver_path = 'C:/Users/Onoe Daichi/Downloads/競馬AI/keiba_ai/common/src/chromedriver-win32/chromedriver.exe'
+    
+    driver_path = '/home/load0/ダウンロード/chromedriver-linux64/chromedriver'
     
     # save_dir.mkdir(parents=True, exist_ok=True)
     # save_filename: str = "race_id_list.txt"
@@ -88,7 +88,7 @@ def scrape_race_id_list(kaisai_date_list: list[str], save_dir = None) ->list[str
     # 処理が終わったときに自動的にchromeを閉じる関数
     with webdriver.Chrome(service=Service(driver_path), options=options) as driver:
         for kaisai_date in tqdm(kaisai_date_list):
-            url = f"https://race.netkeiba.com/top/race_list.html?kaisai_date={kaisai_date}"
+            url = f"https://race.netkeiba.com/top/race_list.html?kaisai_date={kaisai_date}" 
             # 予想外のエラーが起きたときなどにexceptに移る
             try:
                 driver.get(url)
@@ -107,14 +107,14 @@ def scrape_race_id_list(kaisai_date_list: list[str], save_dir = None) ->list[str
         with open(save_dir / "race_id_list.txt", "w") as f:
             f.write("\n".join(race_id_list))
     return race_id_list
-        
 
-def scrape_html_race(race_id_list: list[str], save_dir: Path = HTML_RACE_DIR, skip: bool = True) -> list[Path]:
+
+
+def scrape_html_race(race_id_list: list[str], save_dir: Path = HTML_RACE_DIR, skip: bool = True, path: bool =True) -> list[Path]:
     """
     netkeiba.comのraceページのhtmlをスクレイピングしてsave_dirに保存する関数。
     skip=Trueにすると、すでにhtmlが存在する場合はスキップされる。
-    逆に上書きしたい場合は、skip=Falseにする。
-    スキップされたhtmlのパスは返り値に含まれない。
+    逆に上書きしたい場合は、skip=Falseにする。その際、path=Trueにするとhtml_path_listにpathは追加されるようになる。
     """
     html_path_list = []
     # save_dir.mkdir(parents=True, exist_ok=True)
@@ -122,15 +122,21 @@ def scrape_html_race(race_id_list: list[str], save_dir: Path = HTML_RACE_DIR, sk
         filepath = save_dir / f"{race_id}.bin"
         if skip and filepath.is_file():
             print(f"skipped:{race_id}")
+            if path:
+                html_path_list.append(filepath)
         else:
             url = f'https://db.netkeiba.com/race/{race_id}/'
             # headers = {USER_AGENTS[0]}
             headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+            # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134        .0.0.0 Safari/537.36'
+            
         }
+            
             req = Request(url, headers=headers)
             html = urlopen(req).read()
-            time.sleep(1)
+            # time.sleep(1)
+            time.sleep(1.3)
             with open(filepath, "wb") as f:
                 f.write(html)
             html_path_list.append(filepath)
@@ -162,7 +168,8 @@ def scrape_html_horse(
             req = Request(url, headers=headers)
             response = urlopen(req)
             html = response.read()
-            time.sleep(1)
+            # time.sleep(1)
+            time.sleep(1.3)
             with open(filepath, "wb") as f:
                 f.write(html)
             html_path_list.append(filepath)
@@ -193,7 +200,7 @@ def scrape_html_leading(
             url = f"https://db.netkeiba.com/?pid={leading_type}&year={year}&page={page}"
             headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
-        }
+        } 
             req = Request(url, headers=headers)
             response = urlopen(req)
             html = response.read()
@@ -216,7 +223,7 @@ def scrape_html_ped(
     upgrade_html_path_list = []
     save_dir.mkdir(parents=True, exist_ok=True)
     for horse_id in tqdm(horse_id_list):
-        filepath = save_dir / f"{horse_id}.bin"
+        filepath = save_dir / f"{horse_id}.bin" 
         # binファイルが存在し、skip=Trueの場合はスキップする
         if filepath.is_file() and skip:
             print(f"skipped:{horse_id}")
@@ -229,7 +236,8 @@ def scrape_html_ped(
         }
             req = Request(url, headers=headers)
             html = urlopen(req).read()
-            time.sleep(1)
+            # time.sleep(1)
+            time.sleep(1.3)
             with open(filepath, "wb") as f:
                 f.write(html)
             upgrade_html_path_list.append(filepath)
