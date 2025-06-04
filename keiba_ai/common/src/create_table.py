@@ -4,6 +4,7 @@ from tqdm.notebook import tqdm
 import traceback
 from bs4 import BeautifulSoup
 import re
+# import time
 
 
 RAWDF_DIR = Path("..","data","rawdf")
@@ -75,7 +76,12 @@ def table_results(
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
     concat_df.reset_index()
-    updating_rawdf(concat_df, key="race_id", save_filename=save_filename, save_dir=save_dir)
+    updating_rawdf(
+        concat_df, 
+        key="race_id", 
+        save_filename=save_filename, 
+        save_dir=save_dir
+    ) 
     return concat_df
 
 
@@ -135,8 +141,10 @@ def table_horse_results(
     
     dfs = {} 
     for html_path in tqdm(html_path_list):
+        if html_path.stat().st_size == 0:
+            print(f"Skip empty files.: {html_path}")
+            continue
         with open(html_path, "rb") as f:
-            
             try:
                 horse_id = html_path.stem  # stemで拡張子なしのファイル名を取得
                 html = f.read()
@@ -153,8 +161,8 @@ def table_horse_results(
     concat_df = pd.concat(dfs.values())
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
-    # updating_rawdf(concat_df, key="horse_id", save_filename=save_filename)
-    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    updating_rawdf(concat_df, key="horse_id", save_filename=save_filename)
+    # concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
 
 
@@ -208,17 +216,17 @@ def create_jockey_leading(
                 page_id = html_path.stem
                 html = f.read()
                 soup = BeautifulSoup(html, "lxml").find("table", class_="nk_tb_common")
-                df = pd.read_html(html)[0]
+                df = pd.read_html(html)[0]  
                 df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
                 # jockey_id列追加
-                a_list = soup.find_all("a", href=re.compile(r"/jockey/"))
-                jobkey_id_list = []
+                a_list = soup.find_all("a", href=re.compile(r"^/jockey/"))
+                jockey_id_list = []
                 for a in a_list:
-                    jobkey_id = re.findall(r"\d+",a["href"])[0]
-                    jobkey_id_list.append(jobkey_id)
+                    jockey_id = re.findall(r"\d+",a["href"])[0]
+                    jockey_id_list.append(jockey_id)
                 # 最初の列にjockey_idを挿入
-                df.insert(0, "jockey_id", jobkey_id_list)
-                dfs[jobkey_id] = df
+                df.insert(0, "jockey_id", jockey_id_list)
+                dfs[jockey_id] = df
                 # 最初の列にpage_idを挿入
                 df.insert(0, "page_id", page_id)
             except IndexError as e:
@@ -231,7 +239,13 @@ def create_jockey_leading(
     # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
-    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    updating_rawdf(
+        concat_df,
+        key="page_id",
+        save_filename=save_filename,
+        save_dir=save_dir,
+    )
+    # concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
     
 def create_trainer_leading(
@@ -270,10 +284,17 @@ def create_trainer_leading(
             except AttributeError as e:
                 print(f"{e} at {page_id}")
                 continue
+            # time.sleep(0.5)
     concat_df = pd.concat(dfs.values())
     # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
+    # updating_rawdf(
+    #     concat_df,
+    #     key="trainer_id",
+    #     save_filename=save_filename,
+    #     save_dir=save_dir,
+    # )
     concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
 
@@ -323,7 +344,13 @@ def create_sire_leading(
      # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
-    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    updating_rawdf(
+        concat_df,
+        key="sire_id",
+        save_filename=save_filename,
+        save_dir=save_dir,
+    )
+    # concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
 
 def create_bms_leading(
@@ -371,7 +398,13 @@ def create_bms_leading(
     # concat_df.columns = ["_".join(col) if col[0] != col[1] else col[0] for col in df.columns]
     concat_df.columns = concat_df.columns.str.replace(" ","")
     save_dir.mkdir(parents=True, exist_ok=True)
-    concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
+    updating_rawdf(
+        concat_df,
+        key="bms_id",
+        save_filename=save_filename,
+        save_dir=save_dir,
+    )
+    # concat_df.to_csv(save_dir / save_filename, sep="\t", index=False)
     return concat_df
                 
                 
